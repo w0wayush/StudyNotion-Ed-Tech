@@ -19,26 +19,32 @@ exports.sendOTP = async (req, res) => {
       });
     }
 
+    //generate OTP
+    //upperCaseAlphabets: false,
     let otp = otpGenerator.generate(6, {
       lowerCaseAlphabets: false,
-      upperCaseAlphabets: false,
       specialChars: false,
     });
+    console.log("OTP Generated -> ", otp);
 
+    //check if that OTP is already present in DB or not
     const result = await OTP.findOne({ otp: otp });
+    console.log("Result of finding OTP -> ", result);
 
+    //if present keep creating new OTP until you found unique one
     while (result) {
       otp = otpGenerator.generate(6, {
         lowerCaseAlphabets: false,
-        upperCaseAlphabets: false,
         specialChars: false,
       });
+      //upperCaseAlphabets: false,
 
       result = await OTP.findOne({ otp: otp });
     }
 
     const otpPayload = { email, otp };
     const otpBody = await OTP.create(otpPayload);
+    console.log("OTP Body -> ", otpBody);
 
     res.status(200).json({
       success: true,
@@ -167,7 +173,7 @@ exports.login = async (req, res) => {
       const payload = {
         email: user.email,
         id: user._id,
-        role: user.role,
+        accountType: user.accountType,
       };
       let token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: "2h",
